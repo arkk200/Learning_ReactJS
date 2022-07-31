@@ -1,27 +1,41 @@
-import {useState} from 'react';
+import React, { useState } from 'react';
 
 function InputSample() {
-    const [text, setText] = useState('');
+    const [inputs, setInputs] = useState({
+        name: '',
+        nickname: ''
+    });
 
-    const onChange = (event) => {
-        setText(event.target.value);
+    const {name, nickname} = inputs; // 비구조화 할당문을 통해 값 추출
+
+    const onChange = (e) => {
+        console.dir(e.target);
+        const {value, name} = e.target; // target에서 name과 value를 가져옴
+        // 객체를 업데이트할 때 inputs[name] = value가 아닌
+        // 이런식으로 새 객체를 만들고 그 객체에 변화를 주어야 한다.
+        setInputs({
+            ...inputs,
+            [name]: value
+        });
     };
 
-    const reset = () => {
-        setText('');
-    }
+    const onReset = () => {
+        setInputs({
+            name: '',
+            nickname: ''
+        })
+    };
+
+
     return (
         <div>
-            {/* Input의 값에 접근하려고 한다면 value를 state값으로 만들어주어야 한다.
-            input 태그에 입력을 하게 된다면 먼저 onChange 이벤트가 onChange 화살표 함수를 실행하고
-            이 때 받은 event에서 event.target.value로 text state를 설정한다. 그러고 난 후
-            text state를 input 태그의 value로 설정한다. 이러면 외부에서 이 input의 value를 
-            손 쉽게 수정할 수 있다.
-            */}
-            <input onChange={onChange} value={text} />
-            <button onClick={reset} >초기화</button>
+            {/* 여러개의 input의 상태를 관리한다 해도 하나의 state로 해결할 수 있다. */}
+            <input name="name" placeholder="이름" onChange={onChange} value={name}/>
+            <input name="nickname" placeholder="닉네임" onChange={onChange} value={nickname}/>
+            <button onClick={onReset}>초기화</button>
             <div>
-                <b>값: {text}</b>
+                <b>값: </b>
+                {name} ({nickname})
             </div>
         </div>
     );

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useRef, useReducer, useMemo, useCallback } from 'react';
 import UserList from './UserList';
 import CreateUser from './CreateUser';
 
@@ -7,23 +7,12 @@ function countActiveUsers(users) {
   return users.filter(user => user.active).length;
 }
 
-function App() {
-  const [inputs, setInputs] = useState({
+const initialState = {
+  inputs: {
     username: '',
     email: ''
-  });
-
-  const { username, email } = inputs;
-
-  const onChange = useCallback(event => {
-    const { name, value } = event.target;
-    setInputs({
-      ...inputs,
-      [name]: value
-    });
-  }, []);
-
-  const [users, setUsers] = useState([
+  },
+  users: [
     {
       id: 1,
       username: 'velopert',
@@ -42,68 +31,89 @@ function App() {
       email: 'liz@example.com',
       active: false
     }
-  ]);
+  ]
+};
 
-  // useRef()를 사용할 때 인자를 넣어주면 .current의 기본값이 된다.
+function reducer(state, action){
+  switch (action.type){
+    case 'CHANGE_INPUT':
+      return {
+        ...state,
+        inputs: {
+          ...state.inputs,
+          [action.name]: action.value
+        }
+      };
+    case 'CREATE_USER':
+      return {
+        inputs: initialState.inputs,
+        users: state.users.concat(action.user)
+      };
+    case 'TOGGLE_USER':
+      return {
+        ...state,
+        users: state.users.map(user => 
+          user.id === action.id ? {...user, active: !user.active} : user
+        )
+      };
+    case 'REMOVE_USER':
+      return {
+        ...state,
+        users: state.users.filter(user => user.id !== action.id)
+      };
+    default:
+      return state;
+  }
+}
+
+function App() {
+  // useState, useReduce 중 뭘 써야하는가에 대한 답은 정해져 있지 않다. 상황에 따라 편리하다고 느끼는 것을 쓰면 된다.
+  const [state, dispatch] = useReducer(reducer, initialState);
   const nextId = useRef(4);
+
+  const {users} = state;
+  const {username, email} = state.inputs;
+
+  const onChange = useCallback(event => {
+    const {name, value} = event.target
+    dispatch({
+      type:'CHANGE_INPUT',
+      name,
+      value
+    });
+  }, []);
+
   const onCreate = useCallback(() => {
-    // 배열에 항목 추가하는 로직
-    // .current값을 수정할 때 .current에 직접적으로 수정하면 되고
-    // 조회할 때도 .current를 조회하면 된다.
-    const user = {
-      id: nextId.current,
-      username,
-      email
-    };
-    // state의 불변성을 지키면서 배열에 새 항목을 추가하는 방법에는 2가지가 있다.
-    // 1. 스프레드 연산자
-    setUsers(users => [...users, user]);
-    // 2. concat 함수 사용: 기존의 배열은 수정하지 않고 원소를 추가함
-    // 이렇게 배열의 새 항목을 추가할 땐 스프레드 연산자 또는 concat 내장함수를 쓰면 된다.
-    // setUsers(users.concat(user));
-    // Inputs 초기화
-    setInputs({
-      username: '',
-      email: ''
+    dispatch({
+      type: 'CREATE_USER',
+      user: {
+        id: nextId.current,
+        username,
+        email
+      }
     });
     nextId.current += 1;
-  }, [/*users, */username, email]);
+  }, [username, email]);
 
-  const onRemove = useCallback(
-    id => {
-      // user.id가 파라미터로 일치하지 않는 원소만 추출해서 새로운 배열을 만듦
-      // = user.id가 id인 것을 제거함
-      setUsers(users => users.filter(user => user.id !== id));
-    }, [/*users*/]) // 함수 내에서 사용하는 props가 있다면 꼭 deps 배열 안에 포함시켜야 한다.
-  /*
-   useMemo의 첫번째 파라미터에는 어떻게 연산할지
-   정의하는 함수를 넣고 두번째 파라미터에는 deps 배열을 넣어준다.
-   이 배열 안에 넣은 내용이 바뀌면, 우리가 등록한 함수를 호출해서 값을 연산해주고,
-   만약에 내용이 바뀌지 않았다면 이전에 연산한 값을 재사용하게 됩니다.
-  */
-
-  // deps에 users가 들어있기 때문에 배열이 바뀔 때 마다 함수가 새로 만들어짐
-  // 이를 방지하기 위해서 state를 변화시켜주는 함수의 인자를
-  // 함수형으로 업데이트를 해 주어야 한다. 이럴 경우 useCallback의 deps로
-  // users를 줄 필요가 없으며 최적화를 할 수 있다.
   const onToggle = useCallback(id => {
-    setUsers(users =>
-      users.map(user =>
-        user.id === id ? { ...user, active: !user.active } : user
-      )
-    );
-  }, [/*users*/]);
-  const count = useMemo(() => countActiveUsers(users), [users]);
+    dispatch({
+      type: 'TOGGLE_USER',
+      id
+    });
+  }, []);
 
+  const onRemove = useCallback(id => {
+    dispatch({
+      type: 'REMOVE_USER',
+      id
+    });
+  }, []);
+
+  const count = useMemo(() => countActiveUsers(users), [users]);
   return (
     <>
-      <CreateUser
-        username={username}
-        email={email}
-        onChange={onChange}
-        onCreate={onCreate}
-      />
-      <UserList users={users} onRemove={onRemove} onToggle={onToggle} />
+      <CreateUser username={username} email={email} onChange={onChange} onCreate={onCreate} />
+      <UserList users={users} onToggle={onToggle} onRemove={onRemove} />
       <div>활성사용자 수 : {count}</div>
     </>
   );

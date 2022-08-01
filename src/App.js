@@ -1,6 +1,11 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import UserList from './UserList';
 import CreateUser from './CreateUser';
+
+function countActiveUsers(users){
+  console.log('활성 사용자 수를 세는중...');
+  return users.filter(user => user.active).length;
+}
 
 function App() {
   const [inputs, setInputs] = useState({
@@ -65,7 +70,13 @@ function App() {
     // = user.id가 id인 것을 제거함
     setUsers(users.filter(user => user.id !== id));
   };
-
+  /*
+   useMemo의 첫번째 파라미터에는 어떻게 연산할지
+   정의하는 함수를 넣고 두번째 파라미터에는 deps 배열을 넣어준다.
+   이 배열 안에 넣은 내용이 바뀌면, 우리가 등록한 함수를 호출해서 값을 연산해주고,
+   만약에 내용이 바뀌지 않았다면 이전에 연산한 값을 재사용하게 됩니다.
+  */
+  const count = useMemo(() => countActiveUsers(users), [users]);
   const onToggle = id => {
     setUsers(
       users.map(user => 
@@ -83,6 +94,7 @@ function App() {
         onCreate={onCreate}
       />
       <UserList users={users} onRemove={onRemove} onToggle={onToggle} />
+      <div>활성사용자 수 : {count}</div>
     </>
   );
 }

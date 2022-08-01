@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import UserList from './UserList';
 import CreateUser from './CreateUser';
 
@@ -65,11 +65,12 @@ function App() {
     });
     nextId.current += 1;
   };
-  const onRemove = id => {
+  const onRemove = useCallback(
+    id => {
     // user.id가 파라미터로 일치하지 않는 원소만 추출해서 새로운 배열을 만듦
     // = user.id가 id인 것을 제거함
     setUsers(users.filter(user => user.id !== id));
-  };
+  }, [users]) // 함수 내에서 사용하는 props가 있다면 꼭 deps 배열 안에 포함시켜야 한다.
   /*
    useMemo의 첫번째 파라미터에는 어떻게 연산할지
    정의하는 함수를 넣고 두번째 파라미터에는 deps 배열을 넣어준다.

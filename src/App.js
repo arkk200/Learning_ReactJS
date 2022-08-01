@@ -7,9 +7,9 @@ function App() {
     username: '',
     email: ''
   });
-  const {username, email} = inputs;
+  const { username, email } = inputs;
   const onChange = event => {
-    const {name, value} = event.target;
+    const { name, value } = event.target;
     setInputs({
       ...inputs,
       [name]: value
@@ -19,17 +19,20 @@ function App() {
     {
       id: 1,
       username: 'velopert',
-      email: 'public.velopert@gmail.com'
+      email: 'public.velopert@gmail.com',
+      active: true
     },
     {
       id: 2,
       username: 'tester',
-      email: 'tester@example.com'
+      email: 'tester@example.com',
+      active: false
     },
     {
       id: 3,
       username: 'liz',
-      email: 'liz@example.com'
+      email: 'liz@example.com',
+      active: false
     }
   ]);
 
@@ -40,7 +43,7 @@ function App() {
     // .current값을 수정할 때 .current에 직접적으로 수정하면 되고
     // 조회할 때도 .current를 조회하면 된다.
     const user = {
-      id:nextId.current,
+      id: nextId.current,
       username,
       email
     };
@@ -49,7 +52,7 @@ function App() {
     setUsers([...users, user]);
     // 2. concat 함수 사용: 기존의 배열은 수정하지 않고 원소를 추가함
     // 이렇게 배열의 새 항목을 추가할 땐 스프레드 연산자 또는 concat 내장함수를 쓰면 된다.
- // setUsers(users.concat(user));
+    // setUsers(users.concat(user));
     // Inputs 초기화
     setInputs({
       username: '',
@@ -65,6 +68,14 @@ function App() {
     console.log(users);
   };
 
+  const onToggle = id => {
+    setUsers(
+      users.map(user => 
+        user.id === id ? {...user, active: !user.active} : user
+      )
+    );
+  };
+
   return (
     <>
       <CreateUser
@@ -73,7 +84,7 @@ function App() {
         onChange={onChange}
         onCreate={onCreate}
       />
-      <UserList users={users} onRemove={onRemove} />
+      <UserList users={users} onRemove={onRemove} onToggle={onToggle} />
     </>
   );
 }
